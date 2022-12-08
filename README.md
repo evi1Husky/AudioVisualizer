@@ -1,1 +1,1 @@
-# AudioVisualizer
+Oscilloscope algorithm, takes frequency data from web audio API analyzer node and visualizes it using HTML Canvas.

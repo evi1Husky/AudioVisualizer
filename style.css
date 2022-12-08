@@ -1,0 +1,81 @@
+*,
+*::before,
+*::after {margin: 0; padding: 0; box-sizing: inherit;}
+
+html {
+  font-size: 62.5%;
+  font-family: 'Andale Mono', monospace, "Arial", sans-serif;
+}
+
+body {
+  box-sizing: border-box;
+  font-size: 1.6rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: center; 
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  background: #1b1d21;
+}
+
+/* Fixes blurry canvas graphics */
+canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+canvas {
+  border: 1px solid #4a505a;
+  border-radius: 1rem;
+}
+
+main {
+  color: #b2b2b6;
+  width: 55rem;
+  height: 40rem;
+  border: 0.5px solid #4a505a;
+  border-radius: 1rem;
+  background: #25282e;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+button {
+  color: #1b1d21;
+  font-family: 'Andale Mono', monospace, "Arial", sans-serif;
+  font-weight: 800;
+  width: 8rem;
+  height: 3rem;
+  margin: 2rem;
+  margin-bottom: 3rem;
+  margin-top: 5rem;
+  background-color: #a9a9ad;
+  border: none;
+  border-radius: 0.7rem;
+}
+
+.stop-button {
+  display: none;
+}
+
+.stop-button:hover,
+.play-button:hover {
+  background-color: #d4d4d8;
+}
+
+.stop-button:active,
+.play-button:active {
+  background-color: #f0f0f4;
+}
+
+@media (max-width:420px) {
+  main {
+    width: 99.5%;
+    height: 99.5%;
+  }
+}
