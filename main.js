@@ -1,112 +1,103 @@
 
 class SoundGenerator {
-  static #audioContext = null;
-  static #source = null;
-  static #sound = null;
-  static #gainNode = null;
-  static analyserNode = null;
-  static #destination = null;
-
-  static init() {
-    this.#audioContext = 
+  constructor() {
+    this.audioContext = 
       new (window.AudioContext || window.webkitAudioContext)();
-    this.#source = new Audio('mixkit-chill-choir-glitchy-suspense-687.wav')
-    this.#sound = this.#audioContext.createMediaElementSource(this.#source)
-    this.#gainNode = this.#audioContext.createGain();
-    this.analyserNode = this.#audioContext.createAnalyser();
-    this.#destination = this.#audioContext.destination;
-  
-    this.#gainNode.gain.value = 1;
+    this.source = new Audio('mixkit-glitchy-sci-fi-bass-suspense-686.wav')
+    this.sound = this.audioContext.createMediaElementSource(this.source) 
+    this.gainNode = this.audioContext.createGain();
+    this.analyserNode = this.audioContext.createAnalyser();
+    this.destination = this.audioContext.destination;
+    this.gainNode.gain.value = 1;
     this.analyserNode.fftSize = 2048;
-  
-    this.#sound.connect(this.#gainNode);
-    this.#gainNode.connect(this.#destination);
-    this.#gainNode.connect(this.analyserNode);
+    this.sound.connect(this.gainNode);
+    this.gainNode.connect(this.destination);
+    this.gainNode.connect(this.analyserNode);
   }
 
-  static start() {
-    this.init();
-    this.#source.play();
-  };
+  start() {
+    this.source.play();
+  }
 
-  static stop() {
-    this.analyserNode = null;
-    this.#audioContext.close();
+  stop() {
+    this.source.pause();
+    this.source.currentTime = 0;
   }
 }
 
-function oscilloscope() {
-  const canvas = document.getElementById("oscilloscope");
-  const canvasContext = canvas.getContext("2d");
-  canvas.height = '230';
-  canvas.width = '500';
-  canvasContext.fillStyle = "#001300";
-  canvasContext.strokeStyle = "#00ff04";
-  canvasContext.lineWidth = 1.5;
+const sound = new SoundGenerator();
 
-  function drawLine() {
-    canvasContext.fillRect(0, 0, canvas.width, canvas.height);
-    canvasContext.beginPath();
-    canvasContext.moveTo(0, canvas.height / 2);
-    canvasContext.lineTo(canvas.width, canvas.height / 2);
-    canvasContext.stroke();
+class Oscilloscope {
+  constructor(analyserNode) {
+    this.analyserNode = analyserNode;
+    this.canvas = document.getElementById("oscilloscope");
+    this.canvasContext = this.canvas.getContext("2d");
+    this.canvas.width = this.canvas.clientWidth;
+    this.canvas.height = this.canvas.clientHeight;
+    this.canvasContext.fillStyle = "#001300";
+    this.canvasContext.strokeStyle = "#00ff04";
+    this.canvasContext.lineWidth = 1.9;
+    this.numberOfValues = this.analyserNode.frequencyBinCount;
+    this.waveformData = new Uint8Array(this.numberOfValues);
+    this.suspended = true;
   }
 
-  if(!SoundGenerator.analyserNode) {
-    drawLine();
-    return;
+  idle() {
+    this.suspended = true;
+    this.canvasContext.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.canvasContext.beginPath();
+    this.canvasContext.moveTo(0, this.canvas.height / 2);
+    this.canvasContext.lineTo(this.canvas.width, this.canvas.height / 2);
+    this.canvasContext.stroke();
   }
 
-  const bufferLength = SoundGenerator.analyserNode.frequencyBinCount;
-  const dataArray = new Uint8Array(bufferLength);
+  start() {
+    this.suspended = false;
+    this.draw()
+  }
 
-  function draw() {
-    if(!SoundGenerator.analyserNode) {
-      drawLine();
-      window.cancelAnimationFrame(draw);
+  draw() {
+    if (this.suspended) {
+      window.cancelAnimationFrame(this.draw.bind(this));
       return;
     }
-
-  requestAnimationFrame(draw);
-
-  SoundGenerator.analyserNode.getByteTimeDomainData(dataArray);
-  canvasContext.fillRect(0, 0, canvas.width, canvas.height);
-  canvasContext.beginPath();
-
-  const sliceWidth = (canvas.width * 1.0) / bufferLength;
-  let x = 0;
-  for (let i = 0; i < bufferLength; i++) {
-    const v = dataArray[i] / 128.0;
-    const y = (v * canvas.height) / 2;
-    if (i === 0) {
-      canvasContext.moveTo(x, y);
-    } else {
-      canvasContext.lineTo(x, y);
+    window.requestAnimationFrame(this.draw.bind(this));
+    this.analyserNode.getByteTimeDomainData(this.waveformData);
+    this.canvasContext.fillRect(0, 0, this.canvas.width, this.canvas.height);  
+    this.canvasContext.beginPath();
+    let x = 0;
+    for (let i = 0; i < this.numberOfValues; i++) {
+      const y = ((this.waveformData[i] / 128.0) * this.canvas.height) / 2;
+      if (i === 0) {
+        this.canvasContext.moveTo(x, y);
+      } else {
+        this.canvasContext.lineTo(x, y);
+      }
+      x += (this.canvas.width * 1.0) / this.numberOfValues;
     }
-    x += sliceWidth;
+    this.canvasContext.lineTo(this.canvas.width, this.canvas.height / 2);
+    this.canvasContext.stroke();
   }
-  canvasContext.lineTo(canvas.width, canvas.height / 2);
-  canvasContext.stroke();
-  }
-
-  draw();
 }
+
+const oscilloscope = new Oscilloscope(sound.analyserNode);
 
 const playButton = document.querySelector('.play-button');
 const stopButton = document.querySelector('.stop-button');
 
 playButton.addEventListener('click', () => {
-  SoundGenerator.start();
-  oscilloscope();
+  sound.audioContext.resume()
+  sound.start();
+  oscilloscope.start()
   playButton.style.display = 'none';
   stopButton.style.display = 'block';
-
 });
 
 stopButton.addEventListener("click", () => {
-  SoundGenerator.stop();
+  sound.stop();
+  oscilloscope.idle()
   stopButton.style.display = 'none';
   playButton.style.display = 'block';
 });
 
-oscilloscope()
+oscilloscope.idle();
